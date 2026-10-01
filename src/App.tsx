@@ -13,28 +13,27 @@ import { CodeExplorer } from './components/CodeExplorer';
 import { AdbGuide } from './components/AdbGuide';
 import { NetworkEvent, DeviceInfo } from './types/inspector';
 import { simulator } from './engine/mockClient';
+import { liveSocketClient } from './engine/liveSocketClient';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'guide'>('tui');
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(true);
-
-  const deviceInfo: DeviceInfo = {
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
     deviceModel: 'Google Pixel 8 Pro',
     androidVersion: 'Android 15 (API 35)',
     appPackage: 'com.example.sample',
     appVersion: '1.0.0-debug',
     connectedAt: Date.now(),
     port: 10245
-  };
+  });
 
-  // Seed initial realistic events on load so the TUI is instantly interactive
+  // Seed initial realistic events on load and listen to both real ADB bridge and simulator
   useEffect(() => {
     let isMounted = true;
 
-    // Listen to live simulator events
-    const unsubscribe = simulator.subscribe((event: NetworkEvent) => {
+    const handleNewEvent = (event: NetworkEvent) => {
       if (!isMounted) return;
       setEvents((prev) => {
         const index = prev.findIndex((e) => e.id === event.id);
@@ -46,6 +45,29 @@ export default function App() {
           return [...prev, event];
         }
       });
+    };
+
+    // 1. Listen to live simulator events
+    const unsubSim = simulator.subscribe(handleNewEvent);
+
+    // 2. Connect to real ADB TCP bridge
+    liveSocketClient.connect();
+    const unsubLiveEvents = liveSocketClient.onNetworkEvent(handleNewEvent);
+    const unsubLiveDevice = liveSocketClient.onDevice((dev: any) => {
+      if (!isMounted) return;
+      setDeviceInfo({
+        deviceModel: dev.deviceModel || 'Connected Android Device',
+        androidVersion: dev.androidVersion || 'Android',
+        appPackage: dev.appPackage || 'com.example.app',
+        appVersion: dev.appVersion || 'debug',
+        connectedAt: Date.now(),
+        port: 10245
+      });
+      setIsConnected(true);
+    });
+    const unsubLiveStatus = liveSocketClient.onStatus((status: boolean) => {
+      if (!isMounted) return;
+      if (status) setIsConnected(true);
     });
 
     // Fire initial requests to populate the inspector
@@ -60,7 +82,10 @@ export default function App() {
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      unsubSim();
+      unsubLiveEvents();
+      unsubLiveDevice();
+      unsubLiveStatus();
     };
   }, []);
 
