@@ -6,3 +6,22 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# IDE and local machine state
+.idea/
+*.iml
+local.properties
+
+# Android and Gradle generated files
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Local signing credentials
+*.jks
+*.keystore
