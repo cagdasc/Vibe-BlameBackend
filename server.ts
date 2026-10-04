@@ -3,12 +3,12 @@ import net from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
+import { adbManager } from './src/server/adbManager.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
-const ADB_PORT = 10245;
 const ADB_HOST = '127.0.0.1';
 
 async function startServer() {
@@ -24,16 +24,16 @@ async function startServer() {
   let adbSocket: net.Socket | null = null;
   let reconnectTimer: NodeJS.Timeout | null = null;
 
-  function connectToAdbSocket() {
+  function connectToAdbSocket(targetPort: number = adbManager.getConfig().port) {
     if (adbSocket) {
       adbSocket.destroy();
       adbSocket = null;
     }
 
-    adbSocket = net.createConnection({ host: ADB_HOST, port: ADB_PORT }, () => {
+    adbSocket = net.createConnection({ host: ADB_HOST, port: targetPort }, () => {
       isAdbConnected = true;
-      console.log(`[BlameBackend Server] Connected to Android TCP socket at ${ADB_HOST}:${ADB_PORT}`);
-      broadcastSse({ type: 'STATUS', connected: true });
+      console.log(`[BlameBackend Server] Connected to Android TCP socket at ${ADB_HOST}:${targetPort}`);
+      broadcastSse({ type: 'STATUS', connected: true, port: targetPort, device: detectedDevice });
     });
 
     let buffer = '';
@@ -67,12 +67,12 @@ async function startServer() {
 
     adbSocket.on('close', () => {
       isAdbConnected = false;
-      broadcastSse({ type: 'STATUS', connected: false });
+      broadcastSse({ type: 'STATUS', connected: false, port: targetPort });
       // Schedule background reconnect attempt
       if (!reconnectTimer) {
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
-          connectToAdbSocket();
+          connectToAdbSocket(targetPort);
         }, 3000);
       }
     });
@@ -92,25 +92,122 @@ async function startServer() {
     }
   }
 
-  // API endpoint: Status of the real ADB socket connection
+  // --- ADB Management REST Endpoints ---
+
+  // Get current ADB status, config, and forwards
+  app.get('/api/adb/status', async (req: Request, res: Response) => {
+    const config = adbManager.getConfig();
+    const adbCheck = await adbManager.checkAdb();
+    const forwards = await adbManager.listForwards();
+
+    res.json({
+      connected: isAdbConnected,
+      port: config.port,
+      host: ADB_HOST,
+      device: detectedDevice,
+      adbAvailable: adbCheck.ok,
+      adbVersion: adbCheck.version,
+      adbError: adbCheck.error,
+      config,
+      forwards
+    });
+  });
+
+  // Update ADB Config (custom path, default port, device serial)
+  app.post('/api/adb/config', (req: Request, res: Response) => {
+    const { adbPath, port, selectedSerial } = req.body;
+    adbManager.setConfig({
+      ...(adbPath ? { adbPath } : {}),
+      ...(port ? { port: Number(port) } : {}),
+      ...(selectedSerial !== undefined ? { selectedSerial } : {})
+    });
+    res.json({ success: true, config: adbManager.getConfig() });
+  });
+
+  // Auto-detect ADB location on local system
+  app.post('/api/adb/detect-path', async (req: Request, res: Response) => {
+    const detected = await adbManager.autoDetectAdbPath();
+    if (detected) {
+      adbManager.setConfig({ adbPath: detected });
+      const check = await adbManager.checkAdb();
+      res.json({ success: true, path: detected, version: check.version });
+    } else {
+      res.json({ success: false, message: 'Could not auto-detect adb binary in default SDK paths.' });
+    }
+  });
+
+  // Get list of attached devices from `adb devices -l`
+  app.get('/api/adb/devices', async (req: Request, res: Response) => {
+    try {
+      const devices = await adbManager.getDevices();
+      res.json({ success: true, devices });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.stderr || err.message });
+    }
+  });
+
+  // Perform `adb forward tcp:<port> tcp:<port>` and reconnect socket
+  app.post('/api/adb/forward', async (req: Request, res: Response) => {
+    const port = Number(req.body.port) || adbManager.getConfig().port;
+    const serial = req.body.serial;
+    if (serial !== undefined) {
+      adbManager.setConfig({ selectedSerial: serial });
+    }
+
+    try {
+      const result = await adbManager.forwardPort(port);
+      // Immediately connect TCP socket to the forwarded port
+      connectToAdbSocket(port);
+      res.json({ ...result, port });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Remove `adb forward --remove tcp:<port>`
+  app.post('/api/adb/remove-forward', async (req: Request, res: Response) => {
+    const port = Number(req.body.port) || adbManager.getConfig().port;
+    try {
+      const result = await adbManager.removeForward(port);
+      if (adbSocket) {
+        adbSocket.destroy();
+        adbSocket = null;
+      }
+      isAdbConnected = false;
+      broadcastSse({ type: 'STATUS', connected: false });
+      res.json({ ...result });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Refresh TCP socket connection
+  app.post('/api/adb/reconnect', (req: Request, res: Response) => {
+    const port = Number(req.body.port) || adbManager.getConfig().port;
+    connectToAdbSocket(port);
+    res.json({ success: true, message: `Reconnecting to ${ADB_HOST}:${port}...` });
+  });
+
+  // Compatibility endpoint
   app.get('/api/adb-status', (req: Request, res: Response) => {
     res.json({
       connected: isAdbConnected,
-      port: ADB_PORT,
+      port: adbManager.getConfig().port,
       host: ADB_HOST,
       device: detectedDevice
     });
   });
 
-  // API endpoint: Live event stream for browser
+  // Live SSE event stream for browser
   app.get('/api/stream', (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
+    const config = adbManager.getConfig();
     // Send initial status
-    res.write(`data: ${JSON.stringify({ type: 'STATUS', connected: isAdbConnected, device: detectedDevice })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'STATUS', connected: isAdbConnected, port: config.port, device: detectedDevice })}\n\n`);
 
     sseClients.push(res);
 
@@ -129,8 +226,9 @@ async function startServer() {
   app.use(vite.middlewares);
 
   app.listen(PORT, '0.0.0.0', () => {
+    const config = adbManager.getConfig();
     console.log(`[BlameBackend Server] Running on http://localhost:${PORT}`);
-    console.log(`[BlameBackend Server] Raw TCP socket listener targeting 127.0.0.1:${ADB_PORT}`);
+    console.log(`[BlameBackend Server] Raw TCP socket listener targeting 127.0.0.1:${config.port}`);
   });
 }
 

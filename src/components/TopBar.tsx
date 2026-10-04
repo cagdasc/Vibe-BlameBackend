@@ -1,10 +1,10 @@
 import React from 'react';
-import { Smartphone, RefreshCw, Trash2, Terminal } from 'lucide-react';
+import { Smartphone, RefreshCw, Trash2, Terminal, Settings } from 'lucide-react';
 import { DeviceInfo } from '../types/inspector';
 
 interface TopBarProps {
-  activeTab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'guide';
-  onSelectTab: (tab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'guide') => void;
+  activeTab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings';
+  onSelectTab: (tab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings') => void;
   deviceInfo: DeviceInfo;
   isConnected: boolean;
   onToggleConnection: () => void;
@@ -96,14 +96,15 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         <button
-          onClick={() => onSelectTab('guide')}
-          className={`transition-colors pb-0.5 ${
-            activeTab === 'guide'
+          onClick={() => onSelectTab('settings')}
+          className={`transition-colors pb-0.5 flex items-center gap-1.5 ${
+            activeTab === 'settings'
               ? 'text-cyan-400 border-b-2 border-cyan-400 font-semibold'
               : 'text-neutral-400 hover:text-neutral-200'
           }`}
         >
-          ADB & Setup
+          <Settings className="w-3.5 h-3.5" />
+          <span>Device &amp; ADB</span>
         </button>
       </nav>
 
@@ -111,8 +112,8 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-3">
         {/* Device connection status button */}
         <button
-          onClick={onToggleConnection}
-          title={isConnected ? 'Click to disconnect simulator' : 'Click to reconnect simulator'}
+          onClick={() => onSelectTab('settings')}
+          title="Click to open ADB & Device Settings"
           className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-colors border ${
             isConnected
               ? 'bg-neutral-900 border-emerald-900/60 text-emerald-400 hover:border-emerald-700'
@@ -126,7 +127,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           />
           <Smartphone className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">
-            {isConnected ? deviceInfo.deviceModel : 'Disconnected'}
+            {isConnected ? deviceInfo.deviceModel : 'Connect Device'}
           </span>
           <span className="text-neutral-500">·</span>
           <span className="text-neutral-400">tcp:{deviceInfo.port}</span>

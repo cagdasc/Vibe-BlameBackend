@@ -10,13 +10,13 @@ import { CliStreamView } from './components/CliStreamView';
 import { RequestSimulator } from './components/RequestSimulator';
 import { CustomDispatcher } from './components/CustomDispatcher';
 import { CodeExplorer } from './components/CodeExplorer';
-import { AdbGuide } from './components/AdbGuide';
+import { AdbSettings } from './components/AdbSettings';
 import { NetworkEvent, DeviceInfo } from './types/inspector';
 import { simulator } from './engine/mockClient';
 import { liveSocketClient } from './engine/liveSocketClient';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'guide'>('tui');
+  const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings'>('tui');
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(true);
@@ -61,13 +61,13 @@ export default function App() {
         appPackage: dev.appPackage || 'com.example.app',
         appVersion: dev.appVersion || 'debug',
         connectedAt: Date.now(),
-        port: 10245
+        port: dev.port || 10245
       });
       setIsConnected(true);
     });
     const unsubLiveStatus = liveSocketClient.onStatus((status: boolean) => {
       if (!isMounted) return;
-      if (status) setIsConnected(true);
+      setIsConnected(status);
     });
 
     // Fire initial requests to populate the inspector
@@ -94,6 +94,14 @@ export default function App() {
     setSelectedId(null);
   };
 
+  const handleReconnectSocket = async () => {
+    try {
+      await fetch('/api/adb/reconnect', { method: 'POST' });
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0c0e14] text-neutral-100 font-sans">
       {/* Strict 3-Zone Top Bar Contract */}
@@ -102,7 +110,7 @@ export default function App() {
         onSelectTab={setActiveTab}
         deviceInfo={deviceInfo}
         isConnected={isConnected}
-        onToggleConnection={() => setIsConnected(!isConnected)}
+        onToggleConnection={() => setActiveTab('settings')}
         eventCount={events.length}
         onClearEvents={handleClear}
       />
@@ -147,7 +155,13 @@ export default function App() {
 
         {activeTab === 'code' && <CodeExplorer />}
 
-        {activeTab === 'guide' && <AdbGuide />}
+        {activeTab === 'settings' && (
+          <AdbSettings
+            currentDeviceInfo={deviceInfo}
+            isSocketConnected={isConnected}
+            onRefreshSocket={handleReconnectSocket}
+          />
+        )}
       </main>
     </div>
   );
