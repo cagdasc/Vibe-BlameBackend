@@ -1,10 +1,10 @@
 import React from 'react';
-import { Smartphone, RefreshCw, Trash2, Terminal, Settings } from 'lucide-react';
+import { Smartphone, RefreshCw, Trash2, Terminal } from 'lucide-react';
 import { DeviceInfo } from '../types/inspector';
 
 interface TopBarProps {
-  activeTab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings';
-  onSelectTab: (tab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings') => void;
+  activeTab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices';
+  onSelectTab: (tab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices') => void;
   deviceInfo: DeviceInfo;
   isConnected: boolean;
   onToggleConnection: () => void;
@@ -85,26 +85,15 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         <button
-          onClick={() => onSelectTab('code')}
-          className={`transition-colors pb-0.5 ${
-            activeTab === 'code'
-              ? 'text-cyan-400 border-b-2 border-cyan-400 font-semibold'
-              : 'text-neutral-400 hover:text-neutral-200'
-          }`}
-        >
-          SDK Codebase
-        </button>
-
-        <button
-          onClick={() => onSelectTab('settings')}
+          onClick={() => onSelectTab('devices')}
           className={`transition-colors pb-0.5 flex items-center gap-1.5 ${
-            activeTab === 'settings'
+            activeTab === 'devices'
               ? 'text-cyan-400 border-b-2 border-cyan-400 font-semibold'
               : 'text-neutral-400 hover:text-neutral-200'
           }`}
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Device &amp; ADB</span>
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>Devices</span>
         </button>
       </nav>
 
@@ -112,8 +101,8 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-3">
         {/* Device connection status button */}
         <button
-          onClick={() => onSelectTab('settings')}
-          title="Click to open ADB & Device Settings"
+          onClick={() => onSelectTab('devices')}
+          title="Click to view and select connected devices"
           className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-colors border ${
             isConnected
               ? 'bg-neutral-900 border-emerald-900/60 text-emerald-400 hover:border-emerald-700'
@@ -127,7 +116,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           />
           <Smartphone className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">
-            {isConnected ? deviceInfo.deviceModel : 'Connect Device'}
+            {isConnected ? deviceInfo.deviceModel : 'Select Device'}
           </span>
           <span className="text-neutral-500">·</span>
           <span className="text-neutral-400">tcp:{deviceInfo.port}</span>

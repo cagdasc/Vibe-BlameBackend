@@ -9,13 +9,12 @@ import { TerminalTui } from './components/TerminalTui';
 import { CliStreamView } from './components/CliStreamView';
 import { RequestSimulator } from './components/RequestSimulator';
 import { CustomDispatcher } from './components/CustomDispatcher';
-import { CodeExplorer } from './components/CodeExplorer';
-import { AdbSettings } from './components/AdbSettings';
+import { DeviceManager } from './components/DeviceManager';
 import { NetworkEvent, DeviceInfo } from './types/inspector';
 import { liveSocketClient } from './engine/liveSocketClient';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings'>('tui');
+  const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices'>('tui');
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -95,7 +94,7 @@ export default function App() {
         onSelectTab={setActiveTab}
         deviceInfo={deviceInfo}
         isConnected={isConnected}
-        onToggleConnection={() => setActiveTab('settings')}
+        onToggleConnection={() => setActiveTab('devices')}
         eventCount={events.length}
         onClearEvents={handleClear}
       />
@@ -125,7 +124,7 @@ export default function App() {
         {activeTab === 'scenarios' && (
           <RequestSimulator
             onEventTriggered={() => {
-              // Optionally user can switch to TUI to view, or remain in scenarios
+              // User can trigger simulated requests
             }}
           />
         )}
@@ -138,10 +137,8 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'code' && <CodeExplorer />}
-
-        {activeTab === 'settings' && (
-          <AdbSettings
+        {activeTab === 'devices' && (
+          <DeviceManager
             currentDeviceInfo={deviceInfo}
             isSocketConnected={isConnected}
             onRefreshSocket={handleReconnectSocket}

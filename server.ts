@@ -149,16 +149,27 @@ async function startServer() {
   // Perform `adb forward tcp:<port> tcp:<port>` and reconnect socket
   app.post('/api/adb/forward', async (req: Request, res: Response) => {
     const port = Number(req.body.port) || adbManager.getConfig().port;
-    const serial = req.body.serial;
+    const serial = req.body.serial || adbManager.getConfig().selectedSerial;
     if (serial !== undefined) {
       adbManager.setConfig({ selectedSerial: serial });
     }
 
     try {
-      const result = await adbManager.forwardPort(port);
+      const result = await adbManager.forwardPort(port, serial);
       // Immediately connect TCP socket to the forwarded port
       connectToAdbSocket(port);
-      res.json({ ...result, port });
+      res.json({ ...result, port, serial });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Kill and restart ADB server: adb kill-server && adb start-server
+  app.post('/api/adb/restart-server', async (req: Request, res: Response) => {
+    try {
+      const result = await adbManager.restartServer();
+      const devices = await adbManager.getDevices();
+      res.json({ ...result, devices });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }

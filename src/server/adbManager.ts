@@ -36,17 +36,19 @@ export class AdbManager {
   /**
    * Runs an ADB command using configured binary path and optional device serial
    */
-  public async executeAdb(args: string[]): Promise<{ stdout: string; stderr: string }> {
+  public async executeAdb(args: string[], overrideSerial?: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
       const finalArgs: string[] = [];
 
+      const serialToUse = overrideSerial !== undefined ? overrideSerial : this.config.selectedSerial;
+
       // If a specific serial is selected and not already in args, inject `-s <serial>`
-      if (this.config.selectedSerial && !args.includes('-s')) {
-        finalArgs.push('-s', this.config.selectedSerial);
+      if (serialToUse && !args.includes('-s')) {
+        finalArgs.push('-s', serialToUse);
       }
       finalArgs.push(...args);
 
-      execFile(this.config.adbPath, finalArgs, { timeout: 8000 }, (error, stdout, stderr) => {
+      execFile(this.config.adbPath, finalArgs, { timeout: 10000 }, (error, stdout, stderr) => {
         if (error) {
           return reject({
             error,
@@ -67,9 +69,8 @@ export class AdbManager {
    */
   public async checkAdb(): Promise<{ ok: boolean; version?: string; error?: string }> {
     try {
-      // Run `adb version` without serial
       const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-        execFile(this.config.adbPath, ['version'], { timeout: 5000 }, (err, stdout, stderr) => {
+        execFile(this.config.adbPath, ['version'], { timeout: 6000 }, (err, stdout, stderr) => {
           if (err) return reject({ err, stderr: stderr || err.message });
           resolve({ stdout: stdout || '', stderr: stderr || '' });
         });
@@ -143,7 +144,7 @@ export class AdbManager {
    */
   public async getDevices(): Promise<DeviceInfoItem[]> {
     const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-      execFile(this.config.adbPath, ['devices', '-l'], { timeout: 5000 }, (err, stdout, stderr) => {
+      execFile(this.config.adbPath, ['devices', '-l'], { timeout: 6000 }, (err, stdout, stderr) => {
         if (err) return reject({ err, stderr: stderr || err.message });
         resolve({ stdout: stdout || '', stderr: stderr || '' });
       });
@@ -191,13 +192,41 @@ export class AdbManager {
   /**
    * Forwards local TCP port to device TCP port
    */
-  public async forwardPort(port: number = this.config.port): Promise<{ success: boolean; output: string }> {
+  public async forwardPort(port: number = this.config.port, serial?: string): Promise<{ success: boolean; output: string }> {
     try {
-      const { stdout } = await this.executeAdb(['forward', `tcp:${port}`, `tcp:${port}`]);
+      const { stdout } = await this.executeAdb(['forward', `tcp:${port}`, `tcp:${port}`], serial);
       this.config.port = port;
-      return { success: true, output: stdout || `Forwarded tcp:${port} -> tcp:${port}` };
+      if (serial) {
+        this.config.selectedSerial = serial;
+      }
+      return { success: true, output: stdout || `Forwarded tcp:${port} -> tcp:${port} on device ${serial || 'default'}` };
     } catch (err: any) {
       throw new Error(err.stderr || err.error?.message || 'Failed to forward port');
+    }
+  }
+
+  /**
+   * Kills and restarts the ADB daemon: `adb kill-server` followed by `adb start-server`
+   */
+  public async restartServer(): Promise<{ success: boolean; output: string }> {
+    try {
+      await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        execFile(this.config.adbPath, ['kill-server'], { timeout: 8000 }, (err, stdout, stderr) => {
+          if (err) return reject({ err, stderr: stderr || err.message });
+          resolve({ stdout: stdout || '', stderr: stderr || '' });
+        });
+      });
+
+      const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        execFile(this.config.adbPath, ['start-server'], { timeout: 10000 }, (err, stdout, stderr) => {
+          if (err) return reject({ err, stderr: stderr || err.message });
+          resolve({ stdout: stdout || '', stderr: stderr || '' });
+        });
+      });
+
+      return { success: true, output: stdout || 'ADB server killed and restarted successfully.' };
+    } catch (err: any) {
+      throw new Error(err.stderr || err.error?.message || 'Failed to restart ADB server');
     }
   }
 
