@@ -3,8 +3,8 @@ import { Smartphone, RefreshCw, Trash2, Terminal } from 'lucide-react';
 import { DeviceInfo } from '../types/inspector';
 
 interface TopBarProps {
-  activeTab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices';
-  onSelectTab: (tab: 'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices') => void;
+  activeTab: 'tui' | 'scenarios' | 'dispatcher' | 'devices';
+  onSelectTab: (tab: 'tui' | 'scenarios' | 'dispatcher' | 'devices') => void;
   deviceInfo: DeviceInfo;
   isConnected: boolean;
   onToggleConnection: () => void;
@@ -49,17 +49,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           }`}
         >
           TUI Console
-        </button>
-
-        <button
-          onClick={() => onSelectTab('cli')}
-          className={`transition-colors pb-0.5 ${
-            activeTab === 'cli'
-              ? 'text-cyan-400 border-b-2 border-cyan-400 font-semibold'
-              : 'text-neutral-400 hover:text-neutral-200'
-          }`}
-        >
-          CLI Stream
         </button>
 
         <button

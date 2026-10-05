@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   Check,
   Cable,
-  ChevronDown
+  ChevronDown,
+  Copy
 } from 'lucide-react';
 import { DeviceInfo } from '../types/inspector';
 
@@ -65,6 +66,7 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
   const [isAutoForwarding, setIsAutoForwarding] = useState(false);
   const [isTestingAdb, setIsTestingAdb] = useState(false);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+  const [copiedCli, setCopiedCli] = useState(false);
 
   const [commandLog, setCommandLog] = useState<{ command: string; output: string; error?: boolean } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -530,7 +532,59 @@ export const DeviceManager: React.FC<DeviceManagerProps> = ({
           </div>
         </div>
 
-        {/* 3. ADB Binary Configuration (Collapsible or Clean Section) */}
+        {/* 3. Terminal CLI Stream Instructions Card */}
+        <div className="bg-[#0e121a] p-5 rounded-lg border border-neutral-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-semibold text-neutral-200">
+                Terminal CLI Stream (Headless Mode)
+              </h3>
+            </div>
+            <span className="text-[10px] text-cyan-400 font-mono bg-cyan-950/50 border border-cyan-800/80 px-2 py-0.5 rounded">
+              Raw TCP Stream
+            </span>
+          </div>
+
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            Prefer streaming network traffic directly in your shell or VS Code terminal instead of the browser? Run this command:
+          </p>
+
+          <div className="flex items-center justify-between p-3 bg-[#07090d] border border-neutral-800 rounded font-mono text-xs text-cyan-300">
+            <code>npm run cli</code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('npm run cli');
+                setCopiedCli(true);
+                setTimeout(() => setCopiedCli(false), 2000);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded border border-neutral-700 text-[11px] transition-colors"
+            >
+              {copiedCli ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="text-[11px] text-neutral-500 space-y-1">
+            <p>
+              • Connects directly to the forwarded port <code className="text-neutral-400 font-mono">127.0.0.1:{port}</code> over TCP.
+            </p>
+            <p>
+              • You can also press <kbd className="px-1.5 py-0.5 bg-neutral-800 border border-neutral-700 rounded text-neutral-300 text-[10px]">F5</kbd> in VS Code and select <strong>&quot;▶ Run Standalone Terminal CLI&quot;</strong>.
+            </p>
+          </div>
+        </div>
+
+        {/* 4. ADB Binary Configuration (Collapsible or Clean Section) */}
         <div className="bg-[#0e121a] p-5 rounded-lg border border-neutral-800 space-y-4">
           <div className="flex items-center gap-2">
             <Settings className="w-4 h-4 text-cyan-400" />

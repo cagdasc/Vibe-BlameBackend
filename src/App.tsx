@@ -6,7 +6,6 @@
 import React, { useState, useEffect } from 'react';
 import { TopBar } from './components/TopBar';
 import { TerminalTui } from './components/TerminalTui';
-import { CliStreamView } from './components/CliStreamView';
 import { RequestSimulator } from './components/RequestSimulator';
 import { CustomDispatcher } from './components/CustomDispatcher';
 import { DeviceManager } from './components/DeviceManager';
@@ -14,7 +13,7 @@ import { NetworkEvent, DeviceInfo } from './types/inspector';
 import { liveSocketClient } from './engine/liveSocketClient';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'devices'>('tui');
+  const [activeTab, setActiveTab] = useState<'tui' | 'scenarios' | 'dispatcher' | 'devices'>('tui');
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -106,17 +105,6 @@ export default function App() {
             events={events}
             selectedId={selectedId}
             onSelectEvent={setSelectedId}
-            onClear={handleClear}
-          />
-        )}
-
-        {activeTab === 'cli' && (
-          <CliStreamView
-            events={events}
-            onSelectEvent={(id) => {
-              setSelectedId(id);
-              setActiveTab('tui');
-            }}
             onClear={handleClear}
           />
         )}

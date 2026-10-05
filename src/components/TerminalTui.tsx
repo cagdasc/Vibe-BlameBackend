@@ -16,7 +16,8 @@ import {
   ArrowUpDown,
   Filter,
   Eye,
-  Code
+  Code,
+  Terminal
 } from 'lucide-react';
 
 interface TerminalTuiProps {
@@ -234,6 +235,13 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
           >
             Errors
           </button>
+        </div>
+
+        {/* Terminal CLI hint */}
+        <div className="hidden xl:flex items-center gap-1.5 ml-auto text-[11px] text-neutral-400 font-mono">
+          <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+          <span>CLI Stream:</span>
+          <code className="text-cyan-300 bg-[#07090d] px-1.5 py-0.5 rounded border border-neutral-800">npm run cli</code>
         </div>
       </div>
 
