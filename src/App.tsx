@@ -12,24 +12,23 @@ import { CustomDispatcher } from './components/CustomDispatcher';
 import { CodeExplorer } from './components/CodeExplorer';
 import { AdbSettings } from './components/AdbSettings';
 import { NetworkEvent, DeviceInfo } from './types/inspector';
-import { simulator } from './engine/mockClient';
 import { liveSocketClient } from './engine/liveSocketClient';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'tui' | 'cli' | 'scenarios' | 'dispatcher' | 'code' | 'settings'>('tui');
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
-    deviceModel: 'Google Pixel 8 Pro',
-    androidVersion: 'Android 15 (API 35)',
-    appPackage: 'com.example.sample',
-    appVersion: '1.0.0-debug',
+    deviceModel: 'Waiting for device...',
+    androidVersion: 'Android',
+    appPackage: '',
+    appVersion: '',
     connectedAt: Date.now(),
     port: 10245
   });
 
-  // Seed initial realistic events on load and listen to both real ADB bridge and simulator
+  // Listen to live ADB TCP socket stream
   useEffect(() => {
     let isMounted = true;
 
@@ -47,10 +46,7 @@ export default function App() {
       });
     };
 
-    // 1. Listen to live simulator events
-    const unsubSim = simulator.subscribe(handleNewEvent);
-
-    // 2. Connect to real ADB TCP bridge
+    // Connect to real ADB TCP bridge
     liveSocketClient.connect();
     const unsubLiveEvents = liveSocketClient.onNetworkEvent(handleNewEvent);
     const unsubLiveDevice = liveSocketClient.onDevice((dev: any) => {
@@ -58,7 +54,7 @@ export default function App() {
       setDeviceInfo({
         deviceModel: dev.deviceModel || 'Connected Android Device',
         androidVersion: dev.androidVersion || 'Android',
-        appPackage: dev.appPackage || 'com.example.app',
+        appPackage: dev.appPackage || 'com.cacaosd.blamebackend',
         appVersion: dev.appVersion || 'debug',
         connectedAt: Date.now(),
         port: dev.port || 10245
@@ -70,19 +66,8 @@ export default function App() {
       setIsConnected(status);
     });
 
-    // Fire initial requests to populate the inspector
-    const initSeed = async () => {
-      await simulator.triggerOkHttpUserList();
-      await simulator.triggerOkHttpPayment();
-      await simulator.triggerKtorNotFound();
-      await simulator.triggerOkHttpBinary();
-    };
-
-    initSeed();
-
     return () => {
       isMounted = false;
-      unsubSim();
       unsubLiveEvents();
       unsubLiveDevice();
       unsubLiveStatus();

@@ -252,7 +252,7 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
               </p>
               <p className="text-neutral-600 text-[11px] max-w-xs">
                 {events.length === 0
-                  ? 'Run your Android app or use the "Test Scenarios" tab to trigger simulated OkHttp & Ktor requests.'
+                  ? 'Connect your device and trigger HTTP requests in your Android app to inspect traffic in real time.'
                   : `Clear filter or search with different query tokens.`}
               </p>
               {filterText && (
