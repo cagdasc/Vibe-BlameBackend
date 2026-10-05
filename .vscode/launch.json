@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "▶ Run Web Console & Server (BlameBackend)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "▶ Run Standalone Terminal CLI",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run cli",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Build Web Console (Production)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
