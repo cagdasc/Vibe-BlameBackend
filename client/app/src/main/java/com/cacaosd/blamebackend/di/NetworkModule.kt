@@ -1,6 +1,7 @@
-package com.cacaosd.blamebackend
+package com.cacaosd.blamebackend.di
 
 import com.cacaosd.blamebacked_core.NetworkInspectorInterceptor
+import com.cacaosd.blamebackend.data.remote.PostApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
