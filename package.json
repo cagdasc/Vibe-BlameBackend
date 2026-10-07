@@ -1,8 +1,21 @@
 {
-  "name": "react-example",
-  "private": true,
-  "version": "0.0.0",
+  "name": "blamebackend",
+  "version": "1.0.0",
+  "description": "Real-time Android Network Inspector & Terminal TUI for OkHttp and Ktor",
   "type": "module",
+  "bin": {
+    "blamebackend": "./bin/blamebackend.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "src",
+    "server.ts",
+    "desktop-cli.ts",
+    "index.html",
+    "vite.config.ts",
+    "tsconfig.json"
+  ],
   "scripts": {
     "dev": "tsx server.ts",
     "start": "node server.ts",

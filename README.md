@@ -25,39 +25,79 @@
 - **Zero Semantics Alteration**: Intercepts requests and responses non-destructively using OkHttp's `peekBody`.
 - **Automatic Port Forwarding**: Automatically detects attached USB devices and emulators, forwarding `tcp:10245` on selection.
 - **Interactive TUI Console**: Keyboard-driven UI (`j`/`k` navigation, `/` search, `c` clear, `Tab` panel switching).
-- **Headless Terminal CLI**: Stream colored requests directly in your shell (`npm run cli`).
+- **Headless Terminal CLI**: Stream colored requests directly in your shell (`blamebackend --cli`).
 - **Sensitive Data Redaction**: Automatic redaction of auth tokens, cookies, and secret headers.
 - **Binary & Image Inspection**: Safe hex preview for non-text payloads.
 
 ---
 
-## Quickstart
+## Installation & Running
 
-### 1. Web Console & Server
+### Option 1: Run with `npx` (No Install Required)
 
 ```bash
+# Launch the Web Console (opens on http://localhost:3000)
+npx blamebackend
+
+# Or stream traffic directly in your terminal
+npx blamebackend --cli
+```
+
+---
+
+### Option 2: Install from GitHub Releases
+
+Download `blamebackend-1.0.0.tgz` and `checksums.txt` from the [Releases](https://github.com/cagdascaglak/blamebackend/releases) page:
+
+```bash
+# 1. (Optional) Verify checksum
+sha256sum -c checksums.txt
+
+# 2. Install globally
+npm install -g https://github.com/cagdascaglak/blamebackend/releases/download/v1.0.0/blamebackend-1.0.0.tgz
+
+# 3. Run anywhere:
+blamebackend        # Web Console
+blamebackend --cli  # Terminal CLI
+```
+
+---
+
+### Option 3: Run from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/cagdascaglak/blamebackend.git
+cd blamebackend
+
 # Install dependencies
 npm install
 
-# Start local server (http://localhost:3000)
+# Start development server (http://localhost:3000)
 npm run dev
+
+# Or run terminal CLI
+npm run cli
 ```
+*(In VS Code, you can also press `Ctrl+Shift+B` / `Cmd+Shift+B` to launch the server, or press `F5` to debug).*
 
-*(Or press `Ctrl+Shift+B` / `Cmd+Shift+B` in VS Code).*
+---
 
-### 2. Android App Integration
+## Android App Setup
+
+### 1. Initialize SDK
 
 ```kotlin
-// In Application.onCreate:
+// In your Application.onCreate:
 NetworkInspector.install(this)
 
-// In OkHttpClient builder:
-OkHttpClient.Builder()
+// In your OkHttpClient builder:
+val client = OkHttpClient.Builder()
     .addInterceptor(NetworkInspectorInterceptor())
     .build()
 ```
 
-### 3. Run the Android App & Select Device
+### 2. Build & Run the Sample App
 
 ```bash
 cd client
@@ -68,18 +108,17 @@ Open the **Devices** tab in BlameBackend—your device is auto-selected and port
 
 ![Devices](assets/devices.png)
 
-### 4. Custom Request Dispatcher
+### 3. Custom Request Dispatcher
 
 Test endpoint edge cases or inject custom payloads directly into the inspector using the built-in Dispatcher:
 
 ![Dispatcher](assets/dispatcher.png)
 
-### 5. Standalone Terminal CLI (Without Browser)
+### 4. Standalone Terminal CLI Preview
 
 ```bash
-npm run cli
-# or
-npx tsx desktop-cli.ts
+blamebackend --cli
+# or: npm run cli
 ```
 
 ![Terminal CLI](assets/cli.png)
