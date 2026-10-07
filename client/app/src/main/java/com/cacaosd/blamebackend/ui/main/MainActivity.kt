@@ -6,8 +6,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -59,6 +59,12 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Load post 1")
+                        }
+                        Button(
+                            onClick = { viewModel.loadMissingPost() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Request missing post (expected 404)")
                         }
                         Button(
                             onClick = { viewModel.createPost() },

@@ -10,10 +10,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -41,6 +41,12 @@ class MainViewModel @Inject constructor(
         request("Load post 1") {
             val post = repository.getPost(1)
             "Loaded post ${post.id}: ${post.title}"
+        }
+    }
+
+    fun loadMissingPost() {
+        request("Load missing post 101 (expected 404)") {
+            "Unexpectedly loaded missing post ${repository.getMissingPost().id}"
         }
     }
 

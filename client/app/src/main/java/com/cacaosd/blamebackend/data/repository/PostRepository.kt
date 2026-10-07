@@ -16,6 +16,8 @@ class PostRepository @Inject constructor(private val api: PostApi) {
 
     suspend fun getPost(id: Int): Post = api.getPost(id)
 
+    suspend fun getMissingPost(): Post = api.getPost(101)
+
     suspend fun createPost(): Post = api.createPost(
         PostRequest(
             userId = 1,
@@ -45,7 +47,7 @@ class PostRepository @Inject constructor(private val api: PostApi) {
 
     suspend fun randomRequest(): String {
         val id = Random.nextInt(from = 1, until = 101)
-        return when (Random.nextInt(8)) {
+        return when (Random.nextInt(9)) {
             0 -> "GET posts: loaded ${getPosts().size} posts"
             1 -> "GET posts?userId=1: loaded ${getPostsByUser(1).size} posts"
             2 -> "GET posts/$id: loaded post ${getPost(id).id}"
@@ -53,7 +55,8 @@ class PostRepository @Inject constructor(private val api: PostApi) {
             4 -> "PUT posts/$id: replaced post ${replacePost(id).id}"
             5 -> "PATCH posts/$id: patched post ${patchPost(id).id}"
             6 -> "DELETE posts/$id: ${deletePost(id)}"
-            else -> "GET posts/$id/comments: loaded ${getPostComments(id).size} comments"
+            7 -> "GET posts/$id/comments: loaded ${getPostComments(id).size} comments"
+            else -> "GET posts/101 (expected 404): unexpectedly loaded post ${getMissingPost().id}"
         }
     }
 }
