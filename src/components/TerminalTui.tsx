@@ -90,6 +90,9 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
         setActiveDetailTab('body');
       } else if (e.key === '4') {
         setActiveDetailTab('timing');
+      } else if (e.key === 'y' && selectedEvent) {
+        e.preventDefault();
+        copyToClipboard(formatRequestJson(selectedEvent), 'json');
       }
     };
 
@@ -102,6 +105,51 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
     setTimeout(() => setCopiedSection(null), 1800);
+  };
+
+  const formatRequestJson = (event: NetworkEvent): string => {
+    let parsedReqBody: any = event.request.body?.content;
+    if (parsedReqBody && typeof parsedReqBody === 'string') {
+      try {
+        parsedReqBody = JSON.parse(parsedReqBody);
+      } catch {
+        // preserve string
+      }
+    }
+
+    let parsedResBody: any = event.response?.body?.content;
+    if (parsedResBody && typeof parsedResBody === 'string') {
+      try {
+        parsedResBody = JSON.parse(parsedResBody);
+      } catch {
+        // preserve string
+      }
+    }
+
+    const payload = {
+      id: event.id,
+      timestamp: new Date(event.timestamp).toISOString(),
+      durationMs: event.durationMs,
+      request: {
+        method: event.request.method,
+        url: event.request.url,
+        host: event.request.host,
+        path: event.request.path,
+        protocol: event.request.protocol,
+        client: event.request.clientType,
+        headers: event.request.headers,
+        body: parsedReqBody ?? null
+      },
+      response: event.response ? {
+        statusCode: event.response.statusCode,
+        statusMessage: event.response.statusMessage,
+        headers: event.response.headers,
+        body: parsedResBody ?? null
+      } : null,
+      error: event.error ?? null
+    };
+
+    return JSON.stringify(payload, null, 2);
   };
 
   const generateCurl = (event: NetworkEvent): string => {
@@ -237,11 +285,17 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
           </button>
         </div>
 
-        {/* Terminal CLI hint */}
-        <div className="hidden xl:flex items-center gap-1.5 ml-auto text-[11px] text-neutral-400 font-mono">
-          <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-          <span>CLI Stream:</span>
-          <code className="text-cyan-300 bg-[#07090d] px-1.5 py-0.5 rounded border border-neutral-800">npm run cli</code>
+        {/* Shortcuts & Terminal CLI hint */}
+        <div className="hidden xl:flex items-center gap-3 ml-auto text-[11px] text-neutral-400 font-mono">
+          <span className="text-neutral-500">
+            Hotkey: <kbd className="px-1 py-0.5 bg-neutral-800 text-neutral-300 rounded border border-neutral-700">y</kbd> Copy JSON
+          </span>
+          <span className="text-neutral-600">·</span>
+          <div className="flex items-center gap-1.5">
+            <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+            <span>CLI Stream:</span>
+            <code className="text-cyan-300 bg-[#07090d] px-1.5 py-0.5 rounded border border-neutral-800">npm run cli</code>
+          </div>
         </div>
       </div>
 
@@ -280,7 +334,7 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
                   <div
                     key={event.id}
                     onClick={() => onSelectEvent(event.id)}
-                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                    className={`group flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
                       isSelected
                         ? 'bg-neutral-800/90 text-white border-l-2 border-cyan-400 pl-[10px]'
                         : 'hover:bg-neutral-900/70 text-neutral-300'
@@ -317,9 +371,25 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
                     </span>
 
                     {/* Duration */}
-                    <span className="w-16 text-right tabular-nums text-neutral-400 shrink-0">
+                    <span className="w-14 text-right tabular-nums text-neutral-400 shrink-0 text-[11px]">
                       {event.durationMs !== null ? `${event.durationMs}ms` : 'in-flight'}
                     </span>
+
+                    {/* Quick JSON Copy Button on Hover */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(formatRequestJson(event), `row-json-${event.id}`);
+                      }}
+                      title="Copy request as JSON"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-cyan-400 transition-all shrink-0 rounded hover:bg-neutral-800"
+                    >
+                      {copiedSection === `row-json-${event.id}` ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
                 );
               })}
@@ -379,6 +449,24 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => copyToClipboard(formatRequestJson(selectedEvent), 'json')}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white rounded border border-neutral-700 transition-colors text-[11px]"
+                      title="Copy request as formatted JSON (Hotkey: y)"
+                    >
+                      {copiedSection === 'json' ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400 font-semibold">Copied JSON!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Copy JSON</span>
+                        </>
+                      )}
+                    </button>
+
                     <button
                       onClick={() => copyToClipboard(generateCurl(selectedEvent), 'curl')}
                       className="flex items-center gap-1 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded border border-neutral-700 transition-colors text-[11px]"
@@ -689,12 +777,16 @@ export const TerminalTui: React.FC<TerminalTuiProps> = ({
                           {selectedEvent.request.body.content && (
                             <button
                               onClick={() =>
-                                copyToClipboard(selectedEvent.request.body?.content || '', 'req-body')
+                                copyToClipboard(
+                                  formatJsonOrRaw(selectedEvent.request.body?.content || ''),
+                                  'req-body'
+                                )
                               }
                               className="text-neutral-400 hover:text-neutral-200 text-[11px] flex items-center gap-1"
+                              title="Copy Request Body as JSON"
                             >
                               {copiedSection === 'req-body' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                              <span>Copy</span>
+                              <span>Copy JSON</span>
                             </button>
                           )}
                         </div>
