@@ -3,7 +3,9 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
@@ -17,8 +19,15 @@ const targetScript = isCli
 
 const filteredArgs = args.filter(a => a !== '--cli' && a !== '-c');
 
+let tsxCli;
+try {
+  tsxCli = require.resolve('tsx/cli');
+} catch {
+  tsxCli = path.join(rootDir, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+}
+
 const child = spawn(process.execPath, [
-  path.join(rootDir, 'node_modules', 'tsx', 'dist', 'cli.mjs'),
+  tsxCli,
   targetScript,
   ...filteredArgs
 ], {

@@ -47,14 +47,14 @@ npx blamebackend --cli
 
 ### Option 2: Install from GitHub Releases
 
-Download `blamebackend-1.0.0.tgz` and `checksums.txt` from the [Releases](https://github.com/cagdascaglak/blamebackend/releases) page:
+Download `blamebackend-1.0.0.tgz` and `checksums.txt` from the [Releases](https://github.com/cagdasc/Vibe-BlameBackend/releases) page:
 
 ```bash
 # 1. (Optional) Verify checksum
 sha256sum -c checksums.txt
 
-# 2. Install globally
-npm install -g https://github.com/cagdascaglak/blamebackend/releases/download/v1.0.0/blamebackend-1.0.0.tgz
+# 2. Install globally from GitHub Release URL:
+npm install -g https://github.com/cagdasc/Vibe-BlameBackend/releases/download/v1.0.0/blamebackend-1.0.0.tgz
 
 # 3. Run anywhere:
 blamebackend        # Web Console
@@ -67,8 +67,8 @@ blamebackend --cli  # Terminal CLI
 
 ```bash
 # Clone the repository
-git clone https://github.com/cagdascaglak/blamebackend.git
-cd blamebackend
+git clone https://github.com/cagdasc/Vibe-BlameBackend.git
+cd Vibe-BlameBackend
 
 # Install dependencies
 npm install
@@ -128,7 +128,7 @@ blamebackend --cli
 ## License
 
 ```text
-Copyright 2026 Cagdas Caglak
+Copyright 2026 Cagdas
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
