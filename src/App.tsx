@@ -11,6 +11,7 @@ import { CustomDispatcher } from './components/CustomDispatcher';
 import { DeviceManager } from './components/DeviceManager';
 import { NetworkEvent, DeviceInfo } from './types/inspector';
 import { liveSocketClient } from './engine/liveSocketClient';
+import { simulator } from './engine/mockClient';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'tui' | 'scenarios' | 'dispatcher' | 'devices'>('tui');
@@ -26,7 +27,7 @@ export default function App() {
     port: 10245
   });
 
-  // Listen to live ADB TCP socket stream
+  // Listen to live ADB TCP socket stream AND local simulator/dispatcher events
   useEffect(() => {
     let isMounted = true;
 
@@ -44,7 +45,10 @@ export default function App() {
       });
     };
 
-    // Connect to real ADB TCP bridge
+    // 1. Subscribe to Custom Dispatcher & Scenario simulator
+    const unsubSim = simulator.subscribe(handleNewEvent);
+
+    // 2. Connect to real ADB TCP bridge
     liveSocketClient.connect();
     const unsubLiveEvents = liveSocketClient.onNetworkEvent(handleNewEvent);
     const unsubLiveDevice = liveSocketClient.onDevice((dev: any) => {
@@ -66,6 +70,7 @@ export default function App() {
 
     return () => {
       isMounted = false;
+      unsubSim();
       unsubLiveEvents();
       unsubLiveDevice();
       unsubLiveStatus();
@@ -112,14 +117,17 @@ export default function App() {
         {activeTab === 'scenarios' && (
           <RequestSimulator
             onEventTriggered={() => {
-              // User can trigger simulated requests
+              // Optionally user can view dispatched requests in TUI
             }}
           />
         )}
 
         {activeTab === 'dispatcher' && (
           <CustomDispatcher
-            onDispatched={() => {
+            onDispatched={(dispatchedId) => {
+              if (dispatchedId) {
+                setSelectedId(dispatchedId);
+              }
               setActiveTab('tui');
             }}
           />

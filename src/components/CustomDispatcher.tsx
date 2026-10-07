@@ -4,7 +4,7 @@ import { HttpMethod } from '../types/inspector';
 import { Send, Plus, Trash2, Key, Sliders, CheckCircle } from 'lucide-react';
 
 interface CustomDispatcherProps {
-  onDispatched: () => void;
+  onDispatched: (eventId?: string) => void;
 }
 
 export const CustomDispatcher: React.FC<CustomDispatcherProps> = ({ onDispatched }) => {
@@ -66,7 +66,7 @@ export const CustomDispatcher: React.FC<CustomDispatcherProps> = ({ onDispatched
     });
 
     try {
-      await simulator.executeRequest({
+      const eventId = await simulator.executeRequest({
         clientType,
         method,
         url,
@@ -78,7 +78,7 @@ export const CustomDispatcher: React.FC<CustomDispatcherProps> = ({ onDispatched
       });
       setSuccessNotice(true);
       setTimeout(() => setSuccessNotice(false), 2000);
-      onDispatched();
+      onDispatched(eventId);
     } finally {
       setIsSending(false);
     }
