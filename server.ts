@@ -228,11 +228,18 @@ async function startServer() {
     });
   });
 
+  const isCloudPreview = Boolean(
+    process.env.APPLET_ID ||
+    process.env.K_SERVICE ||
+    process.env.CNB_STACK_ID ||
+    process.env.DISABLE_HMR === 'true'
+  );
+
   // Attach Vite middleware in development
   const vite = await createViteServer({
     server: {
       middlewareMode: true,
-      hmr: process.env.DISABLE_HMR === 'true' ? false : undefined
+      hmr: isCloudPreview ? false : undefined
     },
     appType: 'spa'
   });

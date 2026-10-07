@@ -6,6 +6,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   const currentDir = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
+  const isCloudPreview = Boolean(
+    process.env.APPLET_ID ||
+    process.env.K_SERVICE ||
+    process.env.CNB_STACK_ID ||
+    process.env.DISABLE_HMR === 'true'
+  );
 
   return {
     plugins: [react(), tailwindcss()],
@@ -15,9 +21,9 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is active on your local machine, and disabled only in cloud preview via DISABLE_HMR
-      hmr: process.env.DISABLE_HMR === 'true' ? false : true,
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // HMR is fully enabled on your local machine, and disabled only in cloud preview proxies
+      hmr: isCloudPreview ? false : true,
+      watch: isCloudPreview ? null : {},
     },
   };
 });
