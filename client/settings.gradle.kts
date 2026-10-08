@@ -24,4 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "BlameBackend"
 include(":app")
-include(":core")
+include(":composeApp")
+include(":network-inspector")

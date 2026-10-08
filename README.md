@@ -108,6 +108,16 @@ Open the **Devices** tab in BlameBackend—your device is auto-selected and port
 
 ![Devices](assets/devices.png)
 
+## Desktop Client
+
+Run the desktop Compose client from the `client` directory:
+
+```bash
+./gradlew :composeApp:run
+```
+
+The desktop client listens on `127.0.0.1:10245` and streams Ktor request events using the same inspector protocol as the Android client.
+
 ### 3. Custom Request Dispatcher
 
 Test endpoint edge cases or inject custom payloads directly into the inspector using the built-in Dispatcher:

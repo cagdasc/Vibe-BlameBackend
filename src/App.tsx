@@ -19,9 +19,9 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
-    deviceModel: 'Waiting for device...',
-    androidVersion: 'Android',
-    appPackage: '',
+    deviceName: 'Waiting for device...',
+    osVersion: '',
+    appName: '',
     appVersion: '',
     connectedAt: Date.now(),
     port: 10245
@@ -54,9 +54,9 @@ export default function App() {
     const unsubLiveDevice = liveSocketClient.onDevice((dev: any) => {
       if (!isMounted) return;
       setDeviceInfo({
-        deviceModel: dev.deviceModel || 'Connected Android Device',
-        androidVersion: dev.androidVersion || 'Android',
-        appPackage: dev.appPackage || 'com.cacaosd.blamebackend',
+        deviceName: dev.deviceName || 'Connected Android Device',
+        osVersion: dev.osVersion || 'Android',
+        appName: dev.appName || 'com.cacaosd.blamebackend',
         appVersion: dev.appVersion || 'debug',
         connectedAt: Date.now(),
         port: dev.port || 10245

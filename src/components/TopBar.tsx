@@ -105,7 +105,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           />
           <Smartphone className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">
-            {isConnected ? deviceInfo.deviceModel : 'Select Device'}
+            {isConnected ? deviceInfo.deviceName : 'Select Device'}
           </span>
           <span className="text-neutral-500">·</span>
           <span className="text-neutral-400">tcp:{deviceInfo.port}</span>

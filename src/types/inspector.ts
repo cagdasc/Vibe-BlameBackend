@@ -76,10 +76,10 @@ export interface WireMessage {
 }
 
 export interface DeviceInfo {
-  deviceModel: string;
-  androidVersion: string;
-  appPackage: string;
-  appVersion: string;
+  deviceName: String;
+  osVersion: String;
+  appName: String;
+  appVersion: String;
   connectedAt: number;
   port: number;
 }
